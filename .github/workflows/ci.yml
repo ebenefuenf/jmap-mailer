@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP
-        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # 2.37.1
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.5'
           extensions: ctype, curl, dom, json, mbstring, simplexml, tokenizer, xml, xmlwriter, zip
           coverage: xdebug
 
       - name: Checkout repo
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Full history so mutation tests can diff against the pushed range.
           fetch-depth: 0
@@ -61,3 +61,36 @@ jobs:
       - name: Run static analysis
         if: ${{ always() }}
         run: composer types -- --output-format=github
+
+  tests:
+    name: tests (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # PHP 8.5 with the highest dependencies runs in the ci job.
+        include:
+          - php: '8.3'
+            dependencies: lowest
+          - php: '8.3'
+            dependencies: highest
+          - php: '8.4'
+            dependencies: highest
+          - php: '8.6'
+            dependencies: highest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ctype, curl, dom, json, mbstring, simplexml, tokenizer, xml, xmlwriter, zip
+          coverage: none
+
+      - name: Checkout repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install packages with composer
+        run: composer update --prefer-dist --no-interaction ${{ matrix.dependencies == 'lowest' && '--prefer-lowest --prefer-stable' || '' }}
+
+      - name: Run tests
+        run: composer test
