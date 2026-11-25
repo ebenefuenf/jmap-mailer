@@ -145,10 +145,6 @@ final class ServerErrorTest extends TestCase
 			new JsonMockResponse(['methodResponses' => [['Identity/get', []]]]),
 			sprintf($invalid, 'methodResponses'),
 		];
-		yield 'identity without email' => [
-			self::methodResponses(['Identity/get', ['list' => [['id' => 'id-1']]], 'identities'], ...$mailboxes),
-			sprintf($invalid, 'email'),
-		];
 		yield 'identity without ID' => [
 			self::methodResponses([
 				'Identity/get',

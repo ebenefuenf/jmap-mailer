@@ -90,7 +90,7 @@ JMAP sends only messages that are stored in the account. For each message, the t
 
 Import and submission share one API request. The session, the identities, and the mailboxes are fetched once per transport instance, so further messages need two HTTP requests each. After a failed send, the transport fetches them again, which lets a long-running worker pick up a changed account.
 
-The identity is the one whose address matches the `From` address, because a JMAP identity stands for a `From` address. If no identity matches it, or if you send a `RawMessage`, the transport tries the envelope sender, which is the `Sender`, `Return-Path`, or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. The `From` display name does not need to match the identity's name.
+The identity is the one whose address matches the `From` address, because a JMAP identity stands for a `From` address. If no identity matches it, or if you send a `RawMessage`, the transport tries the envelope sender, which is the `Sender`, `Return-Path`, or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. An identity without an address, as Cyrus reports it, is used when no other identity matches. The `From` display name does not need to match the identity's name.
 
 If no identity matches, the transport throws a `TransportException`. Its `getDebug()` output lists the addresses of the available identities.
 

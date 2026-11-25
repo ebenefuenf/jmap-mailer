@@ -12,9 +12,11 @@ final readonly class Account
 {
 	/**
 	 * @param list<array{id: string, email: string}> $identities
+	 * @param ?string $default the ID of an identity without an address, as Cyrus reports it; it stands for any address
 	 */
 	public function __construct(
 		private array $identities,
+		private ?string $default,
 		public ?string $sent,
 		public ?string $drafts,
 	) {}
@@ -31,15 +33,25 @@ final readonly class Account
 			['Mailbox/query', ['accountId' => $accountId, 'filter' => ['role' => 'drafts']], 'drafts'],
 		]);
 		$identities = [];
+		$default = null;
 
 		foreach (Json::list($responses->get('identities')['list'] ?? null, 'list') as $identity) {
-			$identities[] = [
-				'id' => Json::string($identity['id'] ?? null, 'id'),
-				'email' => Json::string($identity['email'] ?? null, 'email'),
-			];
+			$id = Json::string($identity['id'] ?? null, 'id');
+			$email = Json::optionalString($identity['email'] ?? null);
+
+			if ($email === null) {
+				$default ??= $id;
+			} else {
+				$identities[] = ['id' => $id, 'email' => $email];
+			}
 		}
 
-		return new self($identities, self::first($responses->get('sent')), self::first($responses->get('drafts')));
+		return new self(
+			$identities,
+			$default,
+			self::first($responses->get('sent')),
+			self::first($responses->get('drafts')),
+		);
 	}
 
 	/**
@@ -55,6 +67,10 @@ final readonly class Account
 			if ($identity !== null) {
 				return $identity;
 			}
+		}
+
+		if ($this->default !== null) {
+			return $this->default;
 		}
 
 		$e = new TransportException(sprintf(
