@@ -83,6 +83,19 @@ final class JmapTransport extends AbstractTransport
 	#[\Override]
 	protected function doSend(SentMessage $message): void
 	{
+		try {
+			$this->submit($message);
+		} catch (\Throwable $e) {
+			// The session, an identity, or a mailbox may have changed on the server; the next send fetches them again.
+			$this->account = null;
+			$this->jmap->reset();
+
+			throw $e;
+		}
+	}
+
+	private function submit(SentMessage $message): void
+	{
 		$envelope = $message->getEnvelope();
 		$account = $this->account();
 		$identity = $this->identity ?? $account->identity(self::senders($message));

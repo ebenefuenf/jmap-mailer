@@ -6,6 +6,7 @@ namespace Ebenefuenf\JmapMailer\Tests;
 
 use Ebenefuenf\JmapMailer\JmapTransport;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\Mailer\Exception\TransportException;
 
 final class JmapTransportTest extends TestCase
 {
@@ -106,6 +107,39 @@ final class JmapTransportTest extends TestCase
 		$this->assertSame('sub-2', $sent?->getMessageId());
 		$this->assertSame('https://api.example.com/jmap/upload/u1/', $secondUpload->getRequestUrl());
 		$this->assertSame('Email/import', self::calls($secondSend)[0][0]);
+	}
+
+	public function testFetchesSessionAndLookupAgainAfterAFailedSend(): void
+	{
+		$session = self::session();
+		$lookup = self::lookup(sent: 'mb-new');
+		$send = self::sent();
+		$transport = $this->transport(
+			self::session(),
+			self::lookup(),
+			self::upload(),
+			self::methodResponses(
+				['Email/import', ['notCreated' => ['email' => ['type' => 'invalidProperties']]], 'import'],
+				['error', ['type' => 'invalidResultReference'], 'submit'],
+			),
+			$session,
+			$lookup,
+			self::upload(),
+			$send,
+		);
+
+		try {
+			$transport->send($this->email());
+			$this->fail('The transport must report the rejected import.');
+		} catch (TransportException $e) {
+			$this->assertSame('The JMAP server did not import the message: invalidProperties', $e->getMessage());
+		}
+
+		$transport->send($this->email());
+
+		$this->assertSame(self::SESSION_URL, $session->getRequestUrl());
+		$this->assertSame('Identity/get', self::calls($lookup)[0][0]);
+		$this->assertSame(['mb-new' => true], self::calls($send)[0][1]['emails']['email']['mailboxIds']);
 	}
 
 	public function testStringRepresentationNamesTheServer(): void

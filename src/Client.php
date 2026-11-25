@@ -56,6 +56,11 @@ final class Client
 		return $this->session;
 	}
 
+	public function reset(): void
+	{
+		$this->session = null;
+	}
+
 	/**
 	 * Uploads a blob and returns its ID.
 	 */

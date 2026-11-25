@@ -88,7 +88,7 @@ JMAP sends only messages that are stored in the account. For each message, the t
 2. imports it into the Sent mailbox, or into Drafts if the account has no Sent mailbox,
 3. submits it with the SMTP envelope, which also carries the Bcc recipients.
 
-Import and submission share one API request. The session, the identities, and the mailboxes are fetched once per transport instance, so further messages need two HTTP requests each.
+Import and submission share one API request. The session, the identities, and the mailboxes are fetched once per transport instance, so further messages need two HTTP requests each. After a failed send, the transport fetches them again, which lets a long-running worker pick up a changed account.
 
 The identity is the one whose address matches the `From` address, because a JMAP identity stands for a `From` address. If no identity matches it, or if you send a `RawMessage`, the transport tries the envelope sender, which is the `Sender`, `Return-Path`, or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. The `From` display name does not need to match the identity's name.
 
