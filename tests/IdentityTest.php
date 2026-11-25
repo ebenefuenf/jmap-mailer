@@ -139,24 +139,26 @@ final class IdentityTest extends TestCase
 			]),
 		);
 
-		$this->expectException(TransportException::class);
-		$this->expectExceptionMessage(
-			'No JMAP identity allows sending from "mailer@example.com". Available identities: a@example.com, *@example.org.',
-		);
-
-		$transport->send($email);
+		try {
+			$transport->send($email);
+			$this->fail('The transport must report the missing identity.');
+		} catch (TransportException $e) {
+			$this->assertSame('No JMAP identity allows sending from "mailer@example.com".', $e->getMessage());
+			$this->assertSame("Available JMAP identities: a@example.com, *@example.org.\n", $e->getDebug());
+		}
 	}
 
 	public function testFailsWithoutAnyIdentity(): void
 	{
 		$transport = $this->transport(self::session(), self::lookup([]));
 
-		$this->expectException(TransportException::class);
-		$this->expectExceptionMessage(
-			'No JMAP identity allows sending from "mailer@example.com". Available identities: none.',
-		);
-
-		$transport->send($this->email());
+		try {
+			$transport->send($this->email());
+			$this->fail('The transport must report the missing identity.');
+		} catch (TransportException $e) {
+			$this->assertSame('No JMAP identity allows sending from "mailer@example.com".', $e->getMessage());
+			$this->assertSame("Available JMAP identities: none.\n", $e->getDebug());
+		}
 	}
 
 	public function testUsesConfiguredIdentity(): void

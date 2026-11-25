@@ -92,6 +92,8 @@ Import and submission share one API request. The session, the identities, and th
 
 The identity is the one whose address matches the `From` address, because a JMAP identity stands for a `From` address. If no identity matches it, or if you send a `RawMessage`, the transport tries the envelope sender, which is the `Sender`, `Return-Path`, or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. The `From` display name does not need to match the identity's name.
 
+If no identity matches, the transport throws a `TransportException`. Its `getDebug()` output lists the addresses of the available identities.
+
 The envelope sender is submitted as the SMTP return address with either identity. The server decides whether it accepts a return address that differs from the identity.
 
 If the server rejects the submission, the transport deletes the imported message again and throws a `TransportException` with the server's reason, for example `forbiddenFrom`. Without `keep_copy=0`, a sent message stays in the Sent mailbox; with it, the server deletes the copy after a successful submission. A copy in Drafts is always deleted after sending.

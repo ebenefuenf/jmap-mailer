@@ -57,11 +57,16 @@ final readonly class Account
 			}
 		}
 
-		throw new TransportException(sprintf(
-			'No JMAP identity allows sending from "%s". Available identities: %s.',
+		$e = new TransportException(sprintf(
+			'No JMAP identity allows sending from "%s".',
 			reset($senders)->getAddress(),
+		));
+		$e->appendDebug(sprintf(
+			"Available JMAP identities: %s.\n",
 			$this->identities === [] ? 'none' : implode(', ', array_column($this->identities, 'email')),
 		));
+
+		throw $e;
 	}
 
 	/**
