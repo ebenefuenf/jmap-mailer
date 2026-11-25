@@ -51,6 +51,15 @@ final class MailboxTest extends TestCase
 		$this->assertSame(['#submission'], self::calls($send)[1][1]['onSuccessDestroyEmail']);
 	}
 
+	public function testSendsMailboxIdsAsObjectEvenIfNumeric(): void
+	{
+		$send = self::sent();
+
+		$this->transport(self::session(), self::lookup(sent: '0'), self::upload(), $send)->send($this->email());
+
+		$this->assertStringContainsString('"mailboxIds":{"0":true}', (string) $send->getRequestOptions()['body']);
+	}
+
 	public function testFailsWithoutSentAndDraftsMailbox(): void
 	{
 		$transport = $this->transport(self::session(), self::lookup(sent: null, drafts: null));

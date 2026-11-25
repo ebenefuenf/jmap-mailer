@@ -119,7 +119,7 @@ final class JmapTransport extends AbstractTransport
 					'emails' => [
 						'email' => [
 							'blobId' => $blobId,
-							'mailboxIds' => [$mailbox => true],
+							'mailboxIds' => (object) [$mailbox => true],
 							'keywords' => ['$seen' => true],
 						],
 					],
