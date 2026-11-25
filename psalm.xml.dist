@@ -13,4 +13,12 @@
 	<projectFiles>
 		<directory name="src" />
 	</projectFiles>
+	<issueHandlers>
+		<!-- The JMAP session names the API and upload URLs; they may point to another host than the session URL. -->
+		<TaintedSSRF>
+			<errorLevel type="suppress">
+				<file name="src/Client.php" />
+			</errorLevel>
+		</TaintedSSRF>
+	</issueHandlers>
 </psalm>

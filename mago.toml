@@ -26,3 +26,5 @@ integrations = []
 literal-named-argument = { enabled = false }
 no-boolean-flag-parameter = { enabled = false }
 prefer-early-continue = { enabled = false }
+# Symfony transports take client, dispatcher, and logger after their own arguments.
+excessive-parameter-list = { exclude = ["src/JmapTransport.php"] }
