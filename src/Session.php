@@ -9,7 +9,11 @@ use Symfony\Component\Mailer\Exception\TransportException;
 /** @internal */
 final readonly class Session
 {
+	/**
+	 * @param string $url the URL the session was fetched from, after redirects
+	 */
 	public function __construct(
+		public string $url,
 		public string $apiUrl,
 		public string $uploadUrl,
 		public string $accountId,
@@ -20,7 +24,7 @@ final readonly class Session
 	 *
 	 * @param array<array-key, mixed> $data
 	 */
-	public static function fromJson(array $data): self
+	public static function fromJson(array $data, string $url): self
 	{
 		$primaryAccounts = Json::array($data['primaryAccounts'] ?? null, 'primaryAccounts');
 		$accountId = $primaryAccounts[Client::SUBMISSION] ?? null;
@@ -49,6 +53,7 @@ final readonly class Session
 		}
 
 		return new self(
+			$url,
 			Json::string($data['apiUrl'] ?? null, 'apiUrl'),
 			Json::string($data['uploadUrl'] ?? null, 'uploadUrl'),
 			$accountId,

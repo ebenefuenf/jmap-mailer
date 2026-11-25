@@ -50,8 +50,9 @@ abstract class TestCase extends BaseTestCase
 
 	/**
 	 * @param array<string, mixed> $override
+	 * @param array<string, mixed> $info
 	 */
-	protected static function session(array $override = []): JsonMockResponse
+	protected static function session(array $override = [], array $info = []): JsonMockResponse
 	{
 		return new JsonMockResponse(array_replace([
 			'capabilities' => [
@@ -76,7 +77,7 @@ abstract class TestCase extends BaseTestCase
 			],
 			'apiUrl' => self::API_URL,
 			'uploadUrl' => 'https://api.example.com/jmap/upload/{accountId}/',
-		], $override));
+		], $override), $info);
 	}
 
 	/**

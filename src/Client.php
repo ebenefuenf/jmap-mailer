@@ -36,7 +36,14 @@ final class Client
 
 	public function session(): Session
 	{
-		return $this->session ??= Session::fromJson($this->request('GET', $this->sessionUrl, []));
+		if ($this->session === null) {
+			$response = $this->send('GET', $this->sessionUrl, []);
+			$data = self::decode($response);
+			$url = Json::optionalString($response->getInfo('url')) ?? $this->sessionUrl;
+			$this->session = Session::fromJson($data, $url);
+		}
+
+		return $this->session;
 	}
 
 	/**
@@ -46,7 +53,7 @@ final class Client
 	{
 		$session = $this->session();
 		$url = str_replace('{accountId}', rawurlencode($session->accountId), $session->uploadUrl);
-		$data = $this->request('POST', $url, [
+		$data = $this->post($url, [
 			'headers' => ['Content-Type' => $type],
 			'body' => $contents,
 		]);
@@ -59,7 +66,7 @@ final class Client
 	 */
 	public function call(array $calls): Responses
 	{
-		$data = $this->request('POST', $this->session()->apiUrl, [
+		$data = $this->post($this->session()->apiUrl, [
 			'json' => [
 				'using' => [self::CORE, self::MAIL, self::SUBMISSION],
 				'methodCalls' => $calls,
@@ -70,21 +77,37 @@ final class Client
 	}
 
 	/**
+	 * Sends a request to a URL from the session resource, which may be relative to the session URL.
+	 *
 	 * @param array<string, mixed> $options
 	 *
 	 * @return array<array-key, mixed>
 	 */
-	private function request(string $method, string $url, array $options): array
+	private function post(string $url, array $options): array
+	{
+		return self::decode($this->send('POST', $url, $options + ['base_uri' => $this->session()->url]));
+	}
+
+	/**
+	 * @param array<string, mixed> $options
+	 */
+	private function send(string $method, string $url, array $options): ResponseInterface
 	{
 		try {
-			$response = $this->http->request($method, $url, $options + $this->auth);
+			return $this->http->request($method, $url, $options + $this->auth);
 		} catch (TransportExceptionInterface $e) {
 			throw new TransportException(
 				sprintf('Could not send the request to the JMAP server: %s', $e->getMessage()),
 				previous: $e,
 			);
 		}
+	}
 
+	/**
+	 * @return array<array-key, mixed>
+	 */
+	private static function decode(ResponseInterface $response): array
+	{
 		try {
 			$status = $response->getStatusCode();
 
