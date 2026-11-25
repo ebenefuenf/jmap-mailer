@@ -43,9 +43,31 @@ final readonly class Account
 	}
 
 	/**
-	 * Finds the identity for a sender address. An exact match wins over a wildcard identity like `*@example.com`.
+	 * Finds the identity for the first of the addresses that has one.
+	 *
+	 * @param non-empty-array<array-key, Address> $senders
 	 */
-	public function identity(Address $sender): string
+	public function identity(array $senders): string
+	{
+		foreach ($senders as $sender) {
+			$identity = $this->match($sender);
+
+			if ($identity !== null) {
+				return $identity;
+			}
+		}
+
+		throw new TransportException(sprintf(
+			'No JMAP identity allows sending from "%s". Available identities: %s.',
+			reset($senders)->getAddress(),
+			$this->identities === [] ? 'none' : implode(', ', array_column($this->identities, 'email')),
+		));
+	}
+
+	/**
+	 * An exact match wins over a wildcard identity like `*@example.com`.
+	 */
+	private function match(Address $sender): ?string
 	{
 		$address = strtolower($sender->getAddress());
 		$parts = explode('@', $address);
@@ -64,11 +86,7 @@ final readonly class Account
 			}
 		}
 
-		return $fallback ?? throw new TransportException(sprintf(
-			'No JMAP identity allows sending from "%s". Available identities: %s.',
-			$sender->getAddress(),
-			$this->identities === [] ? 'none' : implode(', ', array_column($this->identities, 'email')),
-		));
+		return $fallback;
 	}
 
 	/**

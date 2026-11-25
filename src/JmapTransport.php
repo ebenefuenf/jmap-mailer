@@ -11,6 +11,8 @@ use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Header\MailboxListHeader;
+use Symfony\Component\Mime\Message;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -44,7 +46,7 @@ final class JmapTransport extends AbstractTransport
 	}
 
 	/**
-	 * Sends every message with this identity ID instead of the one matching the envelope sender.
+	 * Sends every message with this identity ID instead of the one matching the From address.
 	 *
 	 * @return $this
 	 */
@@ -83,7 +85,7 @@ final class JmapTransport extends AbstractTransport
 	{
 		$envelope = $message->getEnvelope();
 		$account = $this->account();
-		$identity = $this->identity ?? $account->identity($envelope->getSender());
+		$identity = $this->identity ?? $account->identity(self::senders($message));
 		$mailbox =
 			$account->sent
 				?? $account->drafts
@@ -142,6 +144,22 @@ final class JmapTransport extends AbstractTransport
 		}
 
 		$message->setMessageId($submissionId);
+	}
+
+	/**
+	 * Lists the From addresses, which JMAP identities stand for, and then the envelope sender as fallback.
+	 *
+	 * @return non-empty-array<array-key, Address>
+	 */
+	private static function senders(SentMessage $message): array
+	{
+		$original = $message->getOriginalMessage();
+		$from = $original instanceof Message ? $original->getHeaders()->get('From') : null;
+
+		return [
+			...($from instanceof MailboxListHeader ? $from->getAddresses() : []),
+			$message->getEnvelope()->getSender(),
+		];
 	}
 
 	private function account(): Account

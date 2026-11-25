@@ -30,7 +30,7 @@ The DSN accepts these options:
 | Option | Default | Description |
 | --- | --- | --- |
 | `session_url` | discovered | The URL of the JMAP session resource, for servers without `/.well-known/jmap`. With this option, the host may be `default`. It must be an `https://` URL, unless the scheme is `jmap+http`. |
-| `identity` | matching sender | The ID of the JMAP identity to send every message with. |
+| `identity` | matching `From` | The ID of the JMAP identity to send every message with. |
 | `keep_copy` | `1` | Set to `0` to delete the copy in the Sent mailbox after sending. |
 
 For example:
@@ -90,7 +90,9 @@ JMAP sends only messages that are stored in the account. For each message, the t
 
 Import and submission share one API request. The session, the identities, and the mailboxes are fetched once per transport instance, so further messages need two HTTP requests each.
 
-The identity is the one whose address matches the envelope sender, which is the `Sender` or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. The `From` display name does not need to match the identity's name.
+The identity is the one whose address matches the `From` address, because a JMAP identity stands for a `From` address. If no identity matches it, or if you send a `RawMessage`, the transport tries the envelope sender, which is the `Sender`, `Return-Path`, or `From` address unless you pass an envelope. An exact match wins over a wildcard identity like `*@example.com`. The `From` display name does not need to match the identity's name.
+
+The envelope sender is submitted as the SMTP return address with either identity. The server decides whether it accepts a return address that differs from the identity.
 
 If the server rejects the submission, the transport deletes the imported message again and throws a `TransportException` with the server's reason, for example `forbiddenFrom`. Without `keep_copy=0`, a sent message stays in the Sent mailbox; with it, the server deletes the copy after a successful submission. A copy in Drafts is always deleted after sending.
 
