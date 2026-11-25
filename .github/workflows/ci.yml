@@ -2,13 +2,19 @@ name: ci
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
   # Weekly full mutation run; pushes only mutate the changed lines.
   schedule:
     - cron: '0 4 * * 1'
 
+permissions:
+  contents: read
+
 jobs:
   ci:
+    # Branches of this repository already run on push; only forks need the pull request event.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Setup PHP
@@ -46,8 +52,8 @@ jobs:
           # collection and would make Infection skip mutants as too slow.
           set --
           # Pushes mutate only changed lines. New branches and force pushes
-          # have no usable base commit and run the full suite, as do
-          # scheduled and manual runs.
+          # have no usable base commit and run the full suite, as do pull
+          # requests and scheduled and manual runs.
           if [ "$EVENT" = push ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
             set -- "$@" --git-diff-lines --git-diff-base="$BEFORE"
           fi
@@ -59,6 +65,7 @@ jobs:
 
   tests:
     name: tests (PHP ${{ matrix.php }}, ${{ matrix.dependencies }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
