@@ -43,6 +43,9 @@
 		"test": [
 			"./vendor/bin/phpunit --testdox --no-coverage --colors=always"
 		],
+		"test:integration": [
+			"./vendor/bin/phpunit --testdox --no-coverage --colors=always --testsuite integration"
+		],
 		"types": "./vendor/bin/psalm --no-cache",
 		"lint": [
 			"./vendor/bin/mago fmt --check",
@@ -62,6 +65,7 @@
 		"mutation": [
 			"Composer\\Config::disableProcessTimeout",
 			"@putenv XDEBUG_MODE=coverage",
+			"@putenv JMAP_TEST_DSN=",
 			"./vendor/bin/infection --threads=max --log-verbosity=all"
 		]
 	},

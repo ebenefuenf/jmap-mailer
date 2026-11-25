@@ -5,10 +5,15 @@
 	bootstrap="vendor/autoload.php"
 	colors="true"
 	failOnWarning="true"
-	cacheDirectory=".phpunit.cache">
+	cacheDirectory=".phpunit.cache"
+	defaultTestSuite="unit">
 	<testsuites>
-		<testsuite name="JMAP Mailer Test Suite">
+		<testsuite name="unit">
 			<directory suffix="Test.php">tests</directory>
+			<exclude>tests/Integration</exclude>
+		</testsuite>
+		<testsuite name="integration">
+			<directory suffix="Test.php">tests/Integration</directory>
 		</testsuite>
 	</testsuites>
 	<source>
