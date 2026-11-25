@@ -10,6 +10,11 @@
 		}
 	],
 	"homepage": "https://github.com/ebenefuenf/jmap-mailer",
+	"support": {
+		"issues": "https://github.com/ebenefuenf/jmap-mailer/issues",
+		"source": "https://github.com/ebenefuenf/jmap-mailer",
+		"security": "https://github.com/ebenefuenf/jmap-mailer/security/policy"
+	},
 	"keywords": [
 		"jmap",
 		"mail",
