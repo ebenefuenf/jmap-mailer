@@ -22,12 +22,14 @@ jmap://USER:PASSWORD@mail.example.com
 - Without a password, the user part is sent as bearer token. With a password, user and password are sent with basic auth.
 - URL-encode special characters in user and password, for example `@` as `%40`.
 - The transport discovers the JMAP session at `https://HOST/.well-known/jmap`. Add a port to the host if needed, like `mail.example.com:8443`.
+- Credentials are only sent over HTTPS. If the session resource or a redirect points to a plain HTTP URL, the transport refuses to use it.
+- For a server without TLS, such as a local test server, use the `jmap+http` scheme, like `jmap+http://USER:PASSWORD@localhost:8080`. It discovers the session over plain HTTP and sends the credentials unencrypted.
 
 The DSN accepts these options:
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `session_url` | discovered | The URL of the JMAP session resource, for servers without `/.well-known/jmap`. With this option, the host may be `default`. |
+| `session_url` | discovered | The URL of the JMAP session resource, for servers without `/.well-known/jmap`. With this option, the host may be `default`. It must be an `https://` URL, unless the scheme is `jmap+http`. |
 | `identity` | matching sender | The ID of the JMAP identity to send every message with. |
 | `keep_copy` | `1` | Set to `0` to delete the copy in the Sent mailbox after sending. |
 

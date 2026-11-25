@@ -114,7 +114,11 @@ final class JmapTransportTest extends TestCase
 
 		$this->assertSame('jmap://jmap.example.com', (string) $this->transport());
 		$this->assertSame(
-			'jmap://localhost:8080',
+			'jmap://mail.example.com:8443',
+			(string) new JmapTransport('https://mail.example.com:8443/jmap/session', 'user', 'password', $client),
+		);
+		$this->assertSame(
+			'jmap+http://localhost:8080',
 			(string) new JmapTransport('http://localhost:8080/jmap/session', 'user', 'password', $client),
 		);
 	}

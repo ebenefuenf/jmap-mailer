@@ -17,6 +17,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * Sends mail through a JMAP server (RFC 8620, RFC 8621).
  *
  * Without a password, the user is sent as a bearer token; otherwise user and password are used for basic auth.
+ * Credentials are only sent over HTTPS, unless the session URL itself uses plain HTTP.
  *
  * @api
  */
@@ -72,7 +73,9 @@ final class JmapTransport extends AbstractTransport
 		$host = parse_url($this->sessionUrl, PHP_URL_HOST);
 		$port = parse_url($this->sessionUrl, PHP_URL_PORT);
 
-		return 'jmap://' . (is_string($host) ? $host : '') . (is_int($port) ? ':' . $port : '');
+		$scheme = Client::scheme($this->sessionUrl) === 'http' ? 'jmap+http' : 'jmap';
+
+		return $scheme . '://' . (is_string($host) ? $host : '') . (is_int($port) ? ':' . $port : '');
 	}
 
 	#[\Override]

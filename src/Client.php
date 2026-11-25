@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Ebenefuenf\JmapMailer;
 
-use Symfony\Component\Mailer\Exception\HttpTransportException;
 use Symfony\Component\Mailer\Exception\TransportException;
-use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -22,6 +20,7 @@ final class Client
 
 	/** @var array<string, string|list<string>> */
 	private readonly array $auth;
+	private readonly bool $plain;
 
 	public function __construct(
 		private readonly HttpClientInterface $http,
@@ -32,14 +31,25 @@ final class Client
 		?string $password = null,
 	) {
 		$this->auth = $password === null ? ['auth_bearer' => $user] : ['auth_basic' => [$user, $password]];
+		$this->plain = self::scheme($sessionUrl) === 'http';
+	}
+
+	/**
+	 * Returns the lower-case scheme of an absolute URL.
+	 */
+	public static function scheme(string $url): ?string
+	{
+		$scheme = parse_url($url, PHP_URL_SCHEME);
+
+		return is_string($scheme) ? strtolower($scheme) : null;
 	}
 
 	public function session(): Session
 	{
 		if ($this->session === null) {
 			$response = $this->send('GET', $this->sessionUrl, []);
-			$data = self::decode($response);
-			$url = Json::optionalString($response->getInfo('url')) ?? $this->sessionUrl;
+			$data = Http::decode($response);
+			$url = $this->secure(Json::optionalString($response->getInfo('url')) ?? $this->sessionUrl);
 			$this->session = Session::fromJson($data, $url);
 		}
 
@@ -85,7 +95,7 @@ final class Client
 	 */
 	private function post(string $url, array $options): array
 	{
-		return self::decode($this->send('POST', $url, $options + ['base_uri' => $this->session()->url]));
+		return Http::decode($this->send('POST', $url, $options + ['base_uri' => $this->session()->url]));
 	}
 
 	/**
@@ -93,6 +103,8 @@ final class Client
 	 */
 	private function send(string $method, string $url, array $options): ResponseInterface
 	{
+		$url = $this->secure($url);
+
 		try {
 			return $this->http->request($method, $url, $options + $this->auth);
 		} catch (TransportExceptionInterface $e) {
@@ -104,48 +116,17 @@ final class Client
 	}
 
 	/**
-	 * @return array<array-key, mixed>
+	 * Refuses plain HTTP unless the session URL uses it, so a redirect or the session cannot move credentials off TLS.
 	 */
-	private static function decode(ResponseInterface $response): array
+	private function secure(string $url): string
 	{
-		try {
-			$status = $response->getStatusCode();
-
-			if ($status >= 300) {
-				throw new HttpTransportException(self::failure($response, $status), $response, $status);
-			}
-
-			return $response->toArray();
-		} catch (DecodingExceptionInterface $e) {
-			throw new HttpTransportException(
-				sprintf('The JMAP server returned invalid JSON: %s', $e->getMessage()),
-				$response,
-				previous: $e,
-			);
-		} catch (TransportExceptionInterface $e) {
-			throw new HttpTransportException(
-				sprintf('Could not reach the JMAP server: %s', $e->getMessage()),
-				$response,
-				previous: $e,
-			);
-		}
-	}
-
-	/**
-	 * Describes a failed request, using the RFC 7807 problem details JMAP servers send with request-level errors.
-	 */
-	private static function failure(ResponseInterface $response, int $status): string
-	{
-		$message = sprintf('The JMAP server responded with HTTP status %d', $status);
-		$problem = Json::optionalArray(json_decode($response->getContent(false), true));
-
-		$type = Json::optionalString($problem['type'] ?? null);
-		$detail = Json::optionalString($problem['detail'] ?? null) ?? Json::optionalString($problem['title'] ?? null);
-
-		if ($type !== null) {
-			$message .= sprintf(' (%s)', $type);
+		if (!$this->plain && self::scheme($url) === 'http') {
+			throw new TransportException(sprintf(
+				'The JMAP server refers to "%s", but credentials are only sent over HTTPS.',
+				$url,
+			));
 		}
 
-		return $detail === null ? $message . '.' : $message . ': ' . $detail;
+		return $url;
 	}
 }

@@ -19,6 +19,7 @@ final class JmapTransportFactoryTest extends TestCase
 		$factory = new JmapTransportFactory();
 
 		$this->assertTrue($factory->supports(Dsn::fromString('jmap://token@api.fastmail.com')));
+		$this->assertTrue($factory->supports(Dsn::fromString('jmap+http://user:pass@localhost:8080')));
 		$this->assertFalse($factory->supports(Dsn::fromString('smtp://user:pass@smtp.example.com')));
 	}
 
@@ -56,9 +57,24 @@ final class JmapTransportFactoryTest extends TestCase
 			'jmap://mail.example.com:8443',
 		];
 		yield 'session URL' => [
-			'jmap://token@default?session_url=http://localhost:8080/jmap/session',
+			'jmap://token@default?session_url=HTTPS://mail.example.com:8443/jmap/session',
+			'https://mail.example.com:8443/jmap/session',
+			'jmap://mail.example.com:8443',
+		];
+		yield 'plain HTTP host' => [
+			'jmap+http://token@localhost:8080',
+			'http://localhost:8080/.well-known/jmap',
+			'jmap+http://localhost:8080',
+		];
+		yield 'plain HTTP session URL' => [
+			'jmap+http://token@default?session_url=http://localhost:8080/jmap/session',
 			'http://localhost:8080/jmap/session',
-			'jmap://localhost:8080',
+			'jmap+http://localhost:8080',
+		];
+		yield 'HTTPS session URL with the plain HTTP scheme' => [
+			'jmap+http://token@default?session_url=https://mail.example.com/jmap/session',
+			'https://mail.example.com/jmap/session',
+			'jmap://mail.example.com',
 		];
 		yield 'empty session URL' => [
 			'jmap://token@mail.example.com?session_url=',
@@ -137,7 +153,7 @@ final class JmapTransportFactoryTest extends TestCase
 	{
 		$this->expectException(UnsupportedSchemeException::class);
 		$this->expectExceptionMessage(
-			'The "smtp" scheme is not supported; supported schemes for mailer "jmap" are: "jmap".',
+			'The "smtp" scheme is not supported; supported schemes for mailer "jmap" are: "jmap", "jmap+http".',
 		);
 
 		(new JmapTransportFactory())->create(Dsn::fromString('smtp://token@api.fastmail.com'));
