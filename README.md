@@ -1,6 +1,6 @@
 # A JMAP transport for Symfony Mailer
 
-This package contains a transport class for [Symfony Mailer](https://symfony.com/doc/current/mailer.html) to send transactional mails through a [JMAP](https://jmap.io/) server ([RFC 8620](https://www.rfc-editor.org/rfc/rfc8620), [RFC 8621](https://www.rfc-editor.org/rfc/rfc8621)), for example [Fastmail](https://www.fastmail.com/) or [Stalwart](https://stalw.art/).
+This package contains a transport class for [Symfony Mailer](https://symfony.com/doc/current/mailer.html) to send transactional mails through a [JMAP](https://jmap.io/) server ([RFC 8620](https://www.rfc-editor.org/rfc/rfc8620), [RFC 8621](https://www.rfc-editor.org/rfc/rfc8621)), for example [Fastmail](https://www.fastmail.com/) or [Cyrus IMAP](https://www.cyrusimap.org/).
 
 ## Installation
 
@@ -100,7 +100,20 @@ If the server rejects the submission, the transport deletes the imported message
 
 `SentMessage::getMessageId()` returns the ID of the JMAP email submission.
 
-## Fastmail
+## Limitations
+
+- Credentials that can send mail through JMAP can also read and delete the mail of the account. Use a dedicated account for an application's mail.
+- If `/.well-known/jmap` redirects to another host, Symfony's HTTP client does not forward the credentials. Set `session_url` to the redirect target instead.
+- The copy in the Sent mailbox does not list the Bcc recipients, because Symfony removes the `Bcc` header from the message it sends.
+- A server may refuse to store the same message twice and reject the import with `alreadyExists`. This affects an identical `RawMessage` that is sent again while the first copy exists. Symfony gives every other message a new `Message-ID`.
+- The server reports bounces and other delivery failures after the submission. The transport does not wait for them; the submission ID lets you query the delivery status through JMAP.
+- `SentMessage::getDebug()` stays empty. The HTTP debug output would contain the credentials.
+
+## Servers
+
+The transport is tested with Fastmail and Cyrus IMAP. Other JMAP servers, such as [Stalwart](https://stalw.art/), should work but are untested.
+
+### Fastmail
 
 Create an API token under Settings → Privacy & Security → API tokens:
 
@@ -117,6 +130,16 @@ MAILER_DSN=jmap://TOKEN@api.fastmail.com
 You can send from every address listed under Settings → My email addresses, because each of them is a JMAP identity.
 
 A token with these scopes can read and delete all mail in the account. For an application's mail, consider a dedicated Fastmail user instead of a personal mailbox.
+
+### Cyrus IMAP
+
+Use the account's user name and password:
+
+```dotenv
+MAILER_DSN=jmap://USER:PASSWORD@mail.example.com
+```
+
+Cyrus reports a single identity without an address, which the transport uses for every `From` address.
 
 ## Development
 
@@ -136,6 +159,23 @@ The integration test sends one real message, with an HTML part and an attachment
 JMAP_TEST_DSN='jmap://TOKEN@api.fastmail.com?keep_copy=0' \
 JMAP_TEST_FROM='sender@example.com' \
 JMAP_TEST_TO='recipient@example.org' \
+composer test:integration
+```
+
+#### Local server
+
+The [Cyrus Docker test server](https://github.com/cyrusimap/cyrus-docker-test-server) provides the users `user1` to `user5` at `example.com`, accepts any password, and keeps all mail inside the container:
+
+```console
+docker run --rm -p 127.0.0.1:8080:8080 ghcr.io/cyrusimap/cyrus-docker-test-server
+```
+
+Then run the test against it:
+
+```console
+JMAP_TEST_DSN='jmap+http://user1:secret@localhost:8080' \
+JMAP_TEST_FROM='user1@example.com' \
+JMAP_TEST_TO='user2@example.com' \
 composer test:integration
 ```
 
