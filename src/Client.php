@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ebenefuenf\JmapMailer;
 
 use Symfony\Component\Mailer\Exception\HttpTransportException;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -75,7 +76,14 @@ final class Client
 	 */
 	private function request(string $method, string $url, array $options): array
 	{
-		$response = $this->http->request($method, $url, $options + $this->auth);
+		try {
+			$response = $this->http->request($method, $url, $options + $this->auth);
+		} catch (TransportExceptionInterface $e) {
+			throw new TransportException(
+				sprintf('Could not send the request to the JMAP server: %s', $e->getMessage()),
+				previous: $e,
+			);
+		}
 
 		try {
 			$status = $response->getStatusCode();
