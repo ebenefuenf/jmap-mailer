@@ -10,7 +10,7 @@ Run the checks before committing:
 composer ci
 ```
 
-It runs the [Mago](https://mago.carthage.software/) formatter and linter (`composer lint`), the [PHPUnit](https://phpunit.de/) test suite with a coverage analysis (`composer coverage`), and [Psalm](https://psalm.dev/) (`composer types`). `composer ci:full` also lints the Markdown files and needs Node.js.
+It runs the [Mago](https://mago.carthage.software/) formatter and linter (`composer lint`), the [PHPUnit](https://phpunit.de/) test suite with a coverage analysis (`composer coverage`), and [Psalm](https://psalm.dev/) (`composer types`).
 
 ### Mutation testing
 
