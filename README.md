@@ -103,6 +103,7 @@ If the server rejects the submission, the transport deletes the imported message
 ## Limitations
 
 - Credentials that can send mail through JMAP can also read and delete the mail of the account. Use a dedicated account for an application's mail.
+- The transport sends the credentials and the messages to the HTTPS URLs the session resource names, which may be on other hosts than the session resource itself. In this respect it trusts the server you configure, as JMAP intends.
 - If `/.well-known/jmap` redirects to another host, Symfony's HTTP client does not forward the credentials. Set `session_url` to the redirect target instead.
 - The copy in the Sent mailbox does not list the Bcc recipients, because Symfony removes the `Bcc` header from the message it sends.
 - A server may refuse to store the same message twice and reject the import with `alreadyExists`. This affects an identical `RawMessage` that is sent again while the first copy exists. Symfony gives every other message a new `Message-ID`.
