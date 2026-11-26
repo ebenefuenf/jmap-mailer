@@ -6,6 +6,7 @@
 *.log
 .cache
 .env
+.envrc
 .php*.cache
 .phpactor.json
 __pycache__
