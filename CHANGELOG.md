@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased](https://github.com/ebenefuenf/jmap-mailer/commits/main)
+## [Unreleased](https://github.com/ebenefuenf/jmap-mailer/compare/0.1.0...HEAD)
+
+No notable changes since the last release.
+
+## [0.1.0](https://github.com/ebenefuenf/jmap-mailer/releases/tag/0.1.0) (2026-11-26)
 
 ### Added
 
