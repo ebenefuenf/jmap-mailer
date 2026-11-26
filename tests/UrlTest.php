@@ -106,6 +106,21 @@ final class UrlTest extends TestCase
 		];
 	}
 
+	public function testFollowsRedirectsOnlyForTheSessionRequest(): void
+	{
+		$session = self::session();
+		$lookup = self::lookup();
+		$upload = self::upload();
+		$send = self::sent();
+
+		$this->transport($session, $lookup, $upload, $send)->send($this->email());
+
+		$this->assertNotSame(0, $session->getRequestOptions()['max_redirects'] ?? null);
+		$this->assertSame(0, $lookup->getRequestOptions()['max_redirects']);
+		$this->assertSame(0, $upload->getRequestOptions()['max_redirects']);
+		$this->assertSame(0, $send->getRequestOptions()['max_redirects']);
+	}
+
 	public function testAllowsPlainHttpWhenTheSessionUrlUsesIt(): void
 	{
 		$lookup = self::lookup();

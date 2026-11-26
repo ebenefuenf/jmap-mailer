@@ -94,13 +94,17 @@ final class Client
 	/**
 	 * Sends a request to a URL from the session resource, which may be relative to the session URL.
 	 *
+	 * Redirects are not followed: they would carry the message to a URL that was never checked.
+	 *
 	 * @param array<string, mixed> $options
 	 *
 	 * @return array<array-key, mixed>
 	 */
 	private function post(string $url, array $options): array
 	{
-		return Http::decode($this->send('POST', $url, $options + ['base_uri' => $this->session()->url]));
+		$options += ['base_uri' => $this->session()->url, 'max_redirects' => 0];
+
+		return Http::decode($this->send('POST', $url, $options));
 	}
 
 	/**

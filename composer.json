@@ -35,7 +35,7 @@
 	"require": {
 		"php": "^8.3",
 		"symfony/mailer": "^7.4 || ^8.0",
-		"symfony/http-client": "^7.4 || ^8.0"
+		"symfony/http-client": "^7.4.18 || ^8.1.6"
 	},
 	"require-dev": {
 		"carthage-software/mago": "1.50.0",

@@ -8,7 +8,7 @@ This package contains a transport class for [Symfony Mailer](https://symfony.com
 composer require ebenefuenf/jmap-mailer
 ```
 
-The package requires PHP 8.3 or newer and works with Symfony Mailer and HttpClient 7.4 and 8.
+The package requires PHP 8.3 or newer and works with Symfony Mailer 7.4 and 8. Of Symfony HttpClient, it needs 7.4.18 or a later 7.4 release, or 8.1.6 or newer: older versions can forward the credentials when a server redirects from HTTPS to plain HTTP.
 
 ## Configuration
 
@@ -22,7 +22,7 @@ jmap://USER:PASSWORD@mail.example.com
 - Without a password, the user part is sent as bearer token. With a password, user and password are sent with basic auth.
 - URL-encode special characters in user and password, for example `@` as `%40`.
 - The transport discovers the JMAP session at `https://HOST/.well-known/jmap`. Add a port to the host if needed, like `mail.example.com:8443`.
-- Credentials are only sent over HTTPS. If the session resource or a redirect points to a plain HTTP URL, the transport refuses to use it.
+- Credentials are only sent over HTTPS. If the session resource or a redirect of the session request points to a plain HTTP URL, the transport refuses to use it. It does not follow redirects of API and upload requests, so a redirect cannot carry a message to another URL.
 - For a server without TLS, such as a local test server, use the `jmap+http` scheme, like `jmap+http://USER:PASSWORD@localhost:8080`. It discovers the session over plain HTTP and sends the credentials unencrypted.
 
 The DSN accepts these options:
