@@ -8,4 +8,6 @@
 - `JmapTransportFactory` creates the transport from `jmap://` DSNs with bearer token or basic auth, session discovery through `/.well-known/jmap`, and the options `session_url`, `identity`, and `keep_copy`.
 - Credentials are only sent over HTTPS: the transport refuses plain HTTP URLs from the session resource or a redirect. The `jmap+http://` scheme allows plain HTTP for servers without TLS.
 - API and upload URLs in the session resource may be relative to the session URL.
-- The transport picks the identity matching the `From` address or else the envelope sender, including wildcard identities, and deletes the imported message again if the server rejects the submission.
+- The transport picks the identity matching the `From` address or else the envelope sender, including wildcard identities and identities without an address.
+- The transport deletes the imported message again if the server rejects the submission.
+- After a failed send, the transport fetches the session, the identities, and the mailboxes again.
